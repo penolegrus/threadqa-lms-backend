@@ -1,0 +1,56 @@
+spring:
+  application:
+    name: openpi-lms-api
+  datasource:
+    url: jdbc:postgresql://localhost:5432/openpi_lms
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: false
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+  mail:
+    host: smtp.example.com
+    port: 587
+    username: ${MAIL_USERNAME:username}
+    password: ${MAIL_PASSWORD:password}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+server:
+  port: 8080
+  servlet:
+    context-path: /
+  error:
+    include-message: always
+    include-binding-errors: always
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:veryLongAndSecureSecretKeyForJwtTokenGenerationInOpenPiLmsApplication}
+    access-token-expiration-ms: 3600000  # 1 hour
+    refresh-token-expiration-ms: 2592000000  # 30 days
+  cors:
+    allowed-origins: http://localhost:3000,https://openpi.com
+  email:
+    from: noreply@openpi.com
+    verification-expiration-minutes: 15
+    password-reset-expiration-minutes: 30
+  referral:
+    commission-percentage: 20
