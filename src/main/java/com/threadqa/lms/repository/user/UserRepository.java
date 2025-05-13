@@ -18,6 +18,8 @@ public interface UserRepository extends JpaRepository<User, Long>, UserRepositor
 
     Optional<User> findByTelegramConfirmationCode(String confirmationCode);
 
+    Page<User> findByIsActiveFalse(Pageable pageable);
+
     @Query("SELECT u FROM User u JOIN u.roles r WHERE r.name = :roleName")
     Page<User> findByRoleName(String roleName, Pageable pageable);
 

@@ -43,7 +43,7 @@ public class LmsBot extends TelegramLongPollingBot {
                 String[] parts = messageText.split(" ");
                 if (parts.length > 1) {
                     String confirmationCode = parts[1];
-                    processConfirmationCode(confirmationCode, chatId, update);
+                    processConfirmationCode(confirmationCode, chatId);
                 } else {
                     sendWelcomeMessage(chatId);
                 }
@@ -51,39 +51,37 @@ public class LmsBot extends TelegramLongPollingBot {
         }
     }
 
-    private void processConfirmationCode(String confirmationCode, String chatId, Update update) {
+    private void processConfirmationCode(String confirmationCode, String chatId) {
         try {
             userRepository.findByTelegramConfirmationCode(confirmationCode)
                     .ifPresent(user -> {
                         user.setTelegramChatId(Long.parseLong(chatId));
-                        if (update.getMessage().getFrom().getUserName() != null) {
-                            user.setTelegramUserName(update.getMessage().getFrom().getUserName());
-                        }
                         user.setTelegramConfirmationCode(null);
                         userRepository.save(user);
 
                         SendMessage message = new SendMessage();
                         message.setChatId(chatId);
-                        message.setText("Ваш Telegram аккаунт успешно привязан к LMS! Теперь вы будете получать уведомления о новых курсах, заданиях и важных событиях.");
+                        message.setText("Ваш Telegram аккаунт успешно привязан к LMS!");
                         try {
                             execute(message);
                         } catch (TelegramApiException e) {
-                            log.error("Error sending message to user", e);
+                            log.error("Ошибка при отправке сообщения пользователю", e);
                         }
                     });
         } catch (Exception e) {
-            log.error("Error processing confirmation code", e);
+            log.error("Ошибка при обработке кода подтверждения", e);
         }
     }
 
     private void sendWelcomeMessage(String chatId) {
         SendMessage message = new SendMessage();
         message.setChatId(chatId);
-        message.setText("Добро пожаловать в LMS бот! Для привязки аккаунта используйте ссылку из личного кабинета.");
+        message.setText("Добро пожаловать в бот ThreadQA LMS!\n\n" +
+                "Для привязки аккаунта используйте ссылку из личного кабинета.");
         try {
             execute(message);
         } catch (TelegramApiException e) {
-            log.error("Error sending welcome message", e);
+            log.error("Ошибка при отправке приветственного сообщения", e);
         }
     }
 
@@ -95,7 +93,7 @@ public class LmsBot extends TelegramLongPollingBot {
             message.enableHtml(true);
             execute(message);
         } catch (TelegramApiException e) {
-            log.error("Error sending message to user", e);
+            log.error("Ошибка при отправке сообщения пользователю", e);
         }
     }
 }

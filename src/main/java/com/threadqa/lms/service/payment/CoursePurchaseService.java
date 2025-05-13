@@ -60,7 +60,7 @@ public class CoursePurchaseService {
                 .orElseThrow(() -> new ResourceNotFoundException("Course not found"));
 
         // Проверяем, что курс доступен для покупки
-        if (!course.getIsPublished()) {
+        if (!course.isPublished()) {
             throw new BadRequestException("Course is not available for purchase");
         }
 

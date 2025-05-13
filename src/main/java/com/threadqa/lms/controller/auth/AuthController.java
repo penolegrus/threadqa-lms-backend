@@ -5,6 +5,7 @@ import com.threadqa.lms.dto.auth.LoginRequest;
 import com.threadqa.lms.dto.auth.RefreshTokenRequest;
 import com.threadqa.lms.dto.auth.RegisterRequest;
 import com.threadqa.lms.service.auth.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,20 +20,26 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
-        AuthResponse response = authService.register(request);
+    public ResponseEntity<AuthResponse> register(
+            @Valid @RequestBody RegisterRequest request,
+            HttpServletRequest httpRequest) {
+        AuthResponse response = authService.register(request, httpRequest);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
-        AuthResponse response = authService.login(request);
+    public ResponseEntity<AuthResponse> login(
+            @Valid @RequestBody LoginRequest request,
+            HttpServletRequest httpRequest) {
+        AuthResponse response = authService.login(request, httpRequest);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/refresh-token")
-    public ResponseEntity<AuthResponse> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
-        AuthResponse response = authService.refreshToken(request);
+    public ResponseEntity<AuthResponse> refreshToken(
+            @Valid @RequestBody RefreshTokenRequest request,
+            HttpServletRequest httpRequest) {
+        AuthResponse response = authService.refreshToken(request, httpRequest);
         return ResponseEntity.ok(response);
     }
 
@@ -48,6 +55,13 @@ public class AuthController {
     @GetMapping("/verify-email")
     public ResponseEntity<String> verifyEmail(@RequestParam String token) {
         authService.verifyEmail(token);
-        return ResponseEntity.ok("Email successfully verified");
+        return ResponseEntity.ok("Email успешно подтвержден");
+    }
+    
+    @PostMapping("/resend-verification")
+    public ResponseEntity<String> resendVerificationEmail(
+            @RequestParam String email) {
+        authService.resendVerificationEmail(email);
+        return ResponseEntity.ok("Письмо с подтверждением отправлено повторно");
     }
 }

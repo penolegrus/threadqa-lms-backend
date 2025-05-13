@@ -49,7 +49,7 @@ public class FileStorageService {
             if (originalFileName.contains(".")) {
                 fileExtension = originalFileName.substring(originalFileName.lastIndexOf("."));
             }
-            String fileName = UUID.randomUUID().toString() + fileExtension;
+            String fileName = UUID.randomUUID() + fileExtension;
 
             // Copy file to the target location (Replacing existing file with the same name)
             Path targetLocation = this.fileStorageLocation.resolve(fileName);

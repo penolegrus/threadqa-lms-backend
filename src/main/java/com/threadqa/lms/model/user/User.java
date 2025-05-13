@@ -67,6 +67,12 @@ public class User {
 
     @Column(name = "telegram_confirmation_code")
     private String telegramConfirmationCode;
+    
+    @Column(name = "block_reason")
+    private String blockReason;
+    
+    @Column(name = "blocked_at")
+    private ZonedDateTime blockedAt;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
