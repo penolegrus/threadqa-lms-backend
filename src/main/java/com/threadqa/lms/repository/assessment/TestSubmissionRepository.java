@@ -35,4 +35,11 @@ public interface TestSubmissionRepository extends JpaRepository<TestSubmission, 
 
     @Query("SELECT COUNT(ts) FROM TestSubmission ts WHERE ts.test.id = :testId AND ts.isPassed = true")
     Long countPassedByTestId(Long testId);
+
+    // Новые методы
+    @Query("SELECT COUNT(ts) FROM TestSubmission ts WHERE ts.user.id = :userId")
+    Long countByUserId(Long userId);
+
+    @Query("SELECT AVG(ts.score) FROM TestSubmission ts WHERE ts.user.id = :userId")
+    Double getAverageScoreByUserId(Long userId);
 }

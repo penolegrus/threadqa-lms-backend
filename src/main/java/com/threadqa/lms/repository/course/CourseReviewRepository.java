@@ -27,4 +27,8 @@ public interface CourseReviewRepository extends JpaRepository<CourseReview, Long
 
     @Query("SELECT COUNT(cr) FROM CourseReview cr WHERE cr.course.id = :courseId")
     Long countByCourseId(Long courseId);
+    
+    // Новый метод
+    @Query("SELECT AVG(cr.rating) FROM CourseReview cr")
+    Double getSystemWideAverageRating();
 }

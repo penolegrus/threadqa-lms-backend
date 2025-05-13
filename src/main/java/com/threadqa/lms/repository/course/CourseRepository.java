@@ -29,4 +29,13 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 
     @Query("SELECT COUNT(c) FROM Course c WHERE c.instructor.id = :instructorId")
     Long countByInstructorId(Long instructorId);
+    
+    // Новые методы
+    @Query("SELECT COUNT(c) FROM Course c WHERE c.isPublished = true")
+    Long countByIsPublishedTrue();
+    
+    @Query("SELECT c.title FROM Course c WHERE c.id = :courseId")
+    String findTitleById(Long courseId);
+    
+    boolean existsByIdAndInstructorId(Long id, Long instructorId);
 }

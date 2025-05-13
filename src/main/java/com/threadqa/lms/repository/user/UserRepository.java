@@ -10,11 +10,13 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, Long> {
+public interface UserRepository extends JpaRepository<User, Long>, UserRepositoryExtensions {
 
     Optional<User> findByEmail(String email);
 
     Boolean existsByEmail(String email);
+
+    Optional<User> findByTelegramConfirmationCode(String confirmationCode);
 
     @Query("SELECT u FROM User u JOIN u.roles r WHERE r.name = :roleName")
     Page<User> findByRoleName(String roleName, Pageable pageable);

@@ -33,4 +33,17 @@ public interface CourseEnrollmentRepository extends JpaRepository<CourseEnrollme
 
     @Query("SELECT AVG(ce.progress) FROM CourseEnrollment ce WHERE ce.course.id = :courseId")
     Double getAverageProgressByCourseId(Long courseId);
+    
+    // Новые методы
+    @Query("SELECT COUNT(ce) FROM CourseEnrollment ce WHERE ce.completedAt IS NOT NULL")
+    Long countByCompletedAtIsNotNull();
+    
+    @Query("SELECT COUNT(ce) FROM CourseEnrollment ce WHERE ce.completedAt IS NOT NULL AND ce.course.id = :courseId")
+    Long countByCompletedAtIsNotNullAndCourseId(Long courseId);
+    
+    @Query("SELECT COUNT(ce) FROM CourseEnrollment ce WHERE ce.completedAt IS NOT NULL AND ce.user.id = :userId")
+    Long countByCompletedAtIsNotNullAndUserId(Long userId);
+    
+    @Query("SELECT AVG(ce.progress) FROM CourseEnrollment ce WHERE ce.user.id = :userId")
+    Double getAverageProgressByUserId(Long userId);
 }

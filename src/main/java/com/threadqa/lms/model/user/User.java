@@ -59,6 +59,15 @@ public class User {
     @Column(name = "last_login_at")
     private ZonedDateTime lastLoginAt;
 
+    @Column(name = "telegram_user_name")
+    private String telegramUserName;
+
+    @Column(name = "telegram_chat_id")
+    private Long telegramChatId;
+
+    @Column(name = "telegram_confirmation_code")
+    private String telegramConfirmationCode;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_roles",
