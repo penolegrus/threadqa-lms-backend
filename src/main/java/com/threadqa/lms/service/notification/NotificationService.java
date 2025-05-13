@@ -48,6 +48,26 @@ public class NotificationService {
         return response;
     }
 
+    @Transactional
+    public void sendLevelUpNotification(User user, Integer levelNumber, String levelName) {
+        String title = "Новый уровень достигнут!";
+        String message = "Поздравляем! Вы достигли уровня " + levelNumber + " - " + levelName;
+        String type = "LEVEL_UP";
+        String link = "/profile/achievements";
+        
+        createNotification(user.getId(), title, message, type, link);
+    }
+
+    @Transactional
+    public void sendBadgeNotification(User user, String badgeName, String badgeDescription) {
+        String title = "Получен новый значок!";
+        String message = "Поздравляем! Вы получили значок \"" + badgeName + "\": " + badgeDescription;
+        String type = "BADGE";
+        String link = "/profile/achievements";
+        
+        createNotification(user.getId(), title, message, type, link);
+    }
+
     @Transactional(readOnly = true)
     public Page<NotificationResponse> getUserNotifications(Long userId, Pageable pageable) {
         User user = userRepository.findById(userId)

@@ -57,26 +57,26 @@ public class ProgressTrackingService {
         if (existingProgress.isPresent()) {
             // Обновление существующей записи
             userProgress = existingProgress.get();
-            
+
             if (request.getIsCompleted() != null) {
                 userProgress.setIsCompleted(request.getIsCompleted());
-                
+
                 if (Boolean.TRUE.equals(request.getIsCompleted()) && userProgress.getCompletedAt() == null) {
                     userProgress.setCompletedAt(ZonedDateTime.now());
                 }
             }
-            
+
             if (request.getProgressPercentage() != null) {
                 userProgress.setProgressPercentage(request.getProgressPercentage());
             }
-            
+
             if (request.getTimeSpentSeconds() != null) {
                 // Добавляем новое время к существующему
-                Long currentTimeSpent = userProgress.getTimeSpentSeconds() != null ? 
+                Long currentTimeSpent = userProgress.getTimeSpentSeconds() != null ?
                         userProgress.getTimeSpentSeconds() : 0L;
                 userProgress.setTimeSpentSeconds(currentTimeSpent + request.getTimeSpentSeconds());
             }
-            
+
             userProgress.setLastAccessedAt(ZonedDateTime.now());
             userProgress.setUpdatedAt(ZonedDateTime.now());
         } else {
@@ -102,9 +102,53 @@ public class ProgressTrackingService {
     }
 
     @Transactional
-    public UserActivityResponse trackActivity(UserActivity.ActivityType activityType, String entityType, 
-                                             Long entityId, String description, String ipAddress, 
-                                             String userAgent, Long currentUserId) {
+    public UserActivityResponse trackActivity(Long userId, String activityType, String description) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        UserActivity userActivity = UserActivity.builder()
+                .user(user)
+                .activityType(UserActivity.ActivityType.valueOf(activityType))
+                .description(description)
+                .createdAt(ZonedDateTime.now())
+                .build();
+
+        UserActivity savedActivity = activityRepository.save(userActivity);
+        return progressMapper.toUserActivityResponse(savedActivity);
+    }
+
+    @Transactional
+    public UserProgressResponse trackProgress(Long userId, String contentType, Long contentId, Integer score) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        // Здесь должна быть логика для определения курса и темы на основе contentType и contentId
+        // Для простоты предположим, что это квиз, связанный с определенной темой
+
+        // Преобразуем строку contentType в перечисление UserProgress.ContentType
+        UserProgress.ContentType contentTypeEnum;
+        try {
+            contentTypeEnum = UserProgress.ContentType.valueOf(contentType);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid content type: " + contentType);
+        }
+
+        // Создаем запрос для отслеживания прогресса
+        UserProgressRequest request = UserProgressRequest.builder()
+                .contentType(contentTypeEnum)
+                .contentId(contentId)
+                .progressPercentage(score.doubleValue())
+                .isCompleted(score >= 70) // Предполагаем, что 70% - это проходной балл
+                .build();
+
+        // Вызываем основной метод отслеживания прогресса
+        return trackProgress(request, userId);
+    }
+
+    @Transactional
+    public UserActivityResponse trackActivity(UserActivity.ActivityType activityType, String entityType,
+                                              Long entityId, String description, String ipAddress,
+                                              String userAgent, Long currentUserId) {
         User user = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
@@ -124,10 +168,10 @@ public class ProgressTrackingService {
     }
 
     @Transactional
-    public UserEngagementResponse trackEngagement(Long courseId, Long sessionDurationSeconds, 
-                                                 Integer pageViews, Integer interactions, 
-                                                 Integer comments, Integer questionsAsked, 
-                                                 Long currentUserId) {
+    public UserEngagementResponse trackEngagement(Long courseId, Long sessionDurationSeconds,
+                                                  Integer pageViews, Integer interactions,
+                                                  Integer comments, Integer questionsAsked,
+                                                  Long currentUserId) {
         User user = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
@@ -174,7 +218,7 @@ public class ProgressTrackingService {
         if (!userId.equals(currentUserId)) {
             Course course = courseRepository.findById(courseId)
                     .orElseThrow(() -> new ResourceNotFoundException("Course not found"));
-            
+
             if (!course.getInstructor().getId().equals(currentUserId)) {
                 throw new AccessDeniedException("You don't have permission to view this user's progress");
             }
@@ -224,7 +268,7 @@ public class ProgressTrackingService {
         if (!userId.equals(currentUserId)) {
             Course course = courseRepository.findById(courseId)
                     .orElseThrow(() -> new ResourceNotFoundException("Course not found"));
-            
+
             if (!course.getInstructor().getId().equals(currentUserId)) {
                 throw new AccessDeniedException("You don't have permission to view this user's progress summary");
             }
@@ -245,12 +289,12 @@ public class ProgressTrackingService {
         // Получение данных о вовлеченности
         Long totalPageViews = engagementRepository.getTotalPageViewsByUser(userId);
         Long totalInteractions = engagementRepository.getTotalInteractionsByUser(userId);
-        
+
         // Получение данных о последней активности
         Page<UserActivity> lastActivities = activityRepository.findByUser(user, Pageable.ofSize(1));
         String lastActivity = "";
         String lastActivityDate = "";
-        
+
         if (!lastActivities.isEmpty()) {
             UserActivity lastAct = lastActivities.getContent().get(0);
             lastActivity = lastAct.getActivityType().toString();

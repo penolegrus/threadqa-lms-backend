@@ -22,8 +22,14 @@ public interface CourseEnrollmentRepository extends JpaRepository<CourseEnrollme
     List<CourseEnrollment> findByCourse(Course course);
 
     Page<CourseEnrollment> findByCourse(Course course, Pageable pageable);
-
+    
+    List<CourseEnrollment> findByCourseId(Long courseId);
+    
+    Page<CourseEnrollment> findByCourseId(Long courseId, Pageable pageable);
+    
     Optional<CourseEnrollment> findByUserAndCourse(User user, Course course);
+    
+    Optional<CourseEnrollment> findByUserIdAndCourseId(Long userId, Long courseId);
 
     @Query("SELECT COUNT(ce) FROM CourseEnrollment ce WHERE ce.course.id = :courseId")
     Long countByCourseId(Long courseId);

@@ -1,5 +1,6 @@
 package com.threadqa.lms.bot;
 
+import com.threadqa.lms.model.user.User;
 import com.threadqa.lms.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +39,7 @@ public class LmsBot extends TelegramLongPollingBot {
         if (update.hasMessage() && update.getMessage().hasText()) {
             String messageText = update.getMessage().getText();
             String chatId = update.getMessage().getChatId().toString();
-
+            
             if (messageText.startsWith("/start")) {
                 String[] parts = messageText.split(" ");
                 if (parts.length > 1) {
@@ -54,20 +55,20 @@ public class LmsBot extends TelegramLongPollingBot {
     private void processConfirmationCode(String confirmationCode, String chatId) {
         try {
             userRepository.findByTelegramConfirmationCode(confirmationCode)
-                    .ifPresent(user -> {
-                        user.setTelegramChatId(Long.parseLong(chatId));
-                        user.setTelegramConfirmationCode(null);
-                        userRepository.save(user);
+                .ifPresent(user -> {
+                    user.setTelegramChatId(Long.parseLong(chatId));
+                    user.setTelegramConfirmationCode(null);
+                    userRepository.save(user);
 
-                        SendMessage message = new SendMessage();
-                        message.setChatId(chatId);
-                        message.setText("Ваш Telegram аккаунт успешно привязан к LMS!");
-                        try {
-                            execute(message);
-                        } catch (TelegramApiException e) {
-                            log.error("Ошибка при отправке сообщения пользователю", e);
-                        }
-                    });
+                    SendMessage message = new SendMessage();
+                    message.setChatId(chatId);
+                    message.setText("Ваш Telegram аккаунт успешно привязан к LMS!");
+                    try {
+                        execute(message);
+                    } catch (TelegramApiException e) {
+                        log.error("Ошибка при отправке сообщения пользователю", e);
+                    }
+                });
         } catch (Exception e) {
             log.error("Ошибка при обработке кода подтверждения", e);
         }

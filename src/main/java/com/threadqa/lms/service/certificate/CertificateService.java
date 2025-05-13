@@ -2,8 +2,8 @@ package com.threadqa.lms.service.certificate;
 
 import com.threadqa.lms.dto.certificate.CertificateRequest;
 import com.threadqa.lms.dto.certificate.CertificateResponse;
+import com.threadqa.lms.dto.certificate.CertificateVerificationRequest;
 import com.threadqa.lms.dto.certificate.CertificateVerificationResponse;
-import com.threadqa.lms.exception.BadRequestException;
 import com.threadqa.lms.exception.ResourceNotFoundException;
 import com.threadqa.lms.mapper.CertificateMapper;
 import com.threadqa.lms.model.certificate.Certificate;
@@ -16,16 +16,18 @@ import com.threadqa.lms.repository.course.CourseRepository;
 import com.threadqa.lms.repository.user.UserRepository;
 import com.threadqa.lms.service.storage.FileStorageService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -37,113 +39,115 @@ public class CertificateService {
     private final CourseEnrollmentRepository courseEnrollmentRepository;
     private final CertificateMapper certificateMapper;
     private final FileStorageService fileStorageService;
-    
-    @Value("${app.certificate.verification.url:https://example.com/verify}")
-    private String verificationBaseUrl;
-    
-    @Value("${app.certificate.download.url:https://example.com/certificates}")
-    private String downloadBaseUrl;
-    
+
     @Transactional
-    public CertificateResponse generateCertificate(Long userId, CertificateRequest request) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
-        
+    public CertificateResponse generateCertificate(CertificateRequest request) {
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + request.getUserId()));
+
         Course course = courseRepository.findById(request.getCourseId())
                 .orElseThrow(() -> new ResourceNotFoundException("Course not found with id: " + request.getCourseId()));
-        
-        // Check if user has completed the course
-        Optional<CourseEnrollment> enrollmentOpt = courseEnrollmentRepository.findByUserAndCourse(user, course);
-        if (enrollmentOpt.isEmpty() || !enrollmentOpt.get().isCompleted()) {
-            throw new BadRequestException("User has not completed this course yet");
+
+        CourseEnrollment enrollment = courseEnrollmentRepository.findByUserIdAndCourseId(request.getUserId(), request.getCourseId())
+                .orElseThrow(() -> new ResourceNotFoundException("Enrollment not found for user id: " + request.getUserId() + " and course id: " + request.getCourseId()));
+
+        if (!enrollment.isCompleted()) {
+            throw new IllegalStateException("Course is not completed yet");
         }
-        
-        // Check if certificate already exists
-        if (certificateRepository.existsByUserAndCourse(user, course)) {
-            throw new BadRequestException("Certificate already exists for this user and course");
-        }
-        
+
         // Generate certificate
-        Certificate certificate = Certificate.builder()
-                .user(user)
-                .course(course)
-                .expiryDate(request.getExpiryDate())
-                .verificationUrl(verificationBaseUrl + "?code=")
-                .build();
-        
-        certificate = certificateRepository.save(certificate);
-        
-        // Update verification URL with the certificate number
-        certificate.setVerificationUrl(verificationBaseUrl + "?code=" + certificate.getCertificateNumber());
-        
-        // Generate certificate PDF
+        Certificate certificate = new Certificate();
+        certificate.setUser(user);
+        certificate.setCourse(course);
+        certificate.setIssueDate(LocalDateTime.now());
+        certificate.setVerificationCode(UUID.randomUUID().toString());
+
+        // Generate PDF and save it
         String filePath = generateCertificatePdf(certificate);
         certificate.setFilePath(filePath);
-        
-        certificate = certificateRepository.save(certificate);
-        
-        String downloadUrl = downloadBaseUrl + "/" + certificate.getId();
-        return certificateMapper.toCertificateResponse(certificate, downloadUrl);
+
+        Certificate savedCertificate = certificateRepository.save(certificate);
+        return certificateMapper.toCertificateResponse(savedCertificate);
     }
-    
+
+    private String generateCertificatePdf(Certificate certificate) {
+        User user = certificate.getUser();
+        Course course = certificate.getCourse();
+
+        // Создаем поток для записи данных PDF
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+        // Здесь должен быть код для генерации PDF с использованием библиотеки, например iText
+        // Пример:
+        // Document document = new Document();
+        // PdfWriter.getInstance(document, outputStream);
+        // document.open();
+        // document.add(new Paragraph("Certificate of Completion"));
+        // document.add(new Paragraph("This is to certify that"));
+        // document.add(new Paragraph(user.getFirstName() + " " + user.getLastName()));
+        // document.add(new Paragraph("has successfully completed the course"));
+        // document.add(new Paragraph(course.getTitle()));
+        // document.add(new Paragraph("Date: " + certificate.getIssueDate()));
+        // document.add(new Paragraph("Verification Code: " + certificate.getVerificationCode()));
+        // document.close();
+
+        // Для примера создаем простой текстовый "PDF"
+        try (PrintWriter writer = new PrintWriter(outputStream)) {
+            writer.println("Certificate of Completion");
+            writer.println("This is to certify that");
+            writer.println(user.getFirstName() + " " + user.getLastName());
+            writer.println("has successfully completed the course");
+            writer.println(course.getTitle());
+            writer.println("Date: " + certificate.getIssueDate());
+            writer.println("Verification Code: " + certificate.getVerificationCode());
+        }
+
+        // Создаем имя файла
+        String fileName = "certificate_" + certificate.getVerificationCode() + ".pdf";
+
+        // Сохраняем файл с использованием FileStorageService
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
+        return fileStorageService.storeFile(inputStream, fileName);
+    }
+
     @Transactional(readOnly = true)
     public List<CertificateResponse> getUserCertificates(Long userId) {
-        userRepository.findById(userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
-        
+
         List<Certificate> certificates = certificateRepository.findByUserId(userId);
-        return certificateMapper.toCertificateResponseList(certificates, downloadBaseUrl);
+        return certificates.stream()
+                .map(certificateMapper::toCertificateResponse)
+                .collect(Collectors.toList());
     }
-    
+
     @Transactional(readOnly = true)
-    public CertificateResponse getCertificate(Long userId, Long certificateId) {
+    public CertificateResponse getCertificate(Long certificateId) {
         Certificate certificate = certificateRepository.findById(certificateId)
                 .orElseThrow(() -> new ResourceNotFoundException("Certificate not found with id: " + certificateId));
-        
-        if (!certificate.getUser().getId().equals(userId)) {
-            throw new BadRequestException("This certificate does not belong to the current user");
-        }
-        
-        String downloadUrl = downloadBaseUrl + "/" + certificate.getId();
-        return certificateMapper.toCertificateResponse(certificate, downloadUrl);
+
+        return certificateMapper.toCertificateResponse(certificate);
     }
-    
+
     @Transactional(readOnly = true)
     public Resource downloadCertificate(Long certificateId) {
         Certificate certificate = certificateRepository.findById(certificateId)
                 .orElseThrow(() -> new ResourceNotFoundException("Certificate not found with id: " + certificateId));
-        
-        try {
-            return fileStorageService.loadFileAsResource(certificate.getFilePath());
-        } catch (IOException e) {
-            throw new RuntimeException("Error loading certificate file", e);
-        }
+
+        return fileStorageService.loadFileAsResource(certificate.getFilePath());
     }
-    
+
     @Transactional(readOnly = true)
-    public CertificateVerificationResponse verifyCertificate(String certificateNumber) {
-        Optional<Certificate> certificateOpt = certificateRepository.findByCertificateNumber(certificateNumber);
-        return certificateMapper.toCertificateVerificationResponse(certificateOpt.orElse(null));
-    }
-    
-    private String generateCertificatePdf(Certificate certificate) {
-        // This is a placeholder for actual PDF generation logic
-        // In a real implementation, you would use a library like iText, PDFBox, or JasperReports
-        
-        String fileName = "certificate_" + certificate.getId() + ".pdf";
-        String content = "Certificate of Completion\n\n" +
-                "This is to certify that\n\n" +
-                certificate.getUser().getUsername() + "\n\n" +
-                "has successfully completed the course\n\n" +
-                certificate.getCourse().getTitle() + "\n\n" +
-                "Certificate Number: " + certificate.getCertificateNumber() + "\n" +
-                "Issue Date: " + certificate.getIssueDate();
-        
-        try {
-            ByteArrayInputStream inputStream = new ByteArrayInputStream(content.getBytes());
-            return fileStorageService.storeFile(inputStream, fileName, "application/pdf");
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to generate certificate PDF", e);
-        }
+    public CertificateVerificationResponse verifyCertificate(CertificateVerificationRequest request) {
+        Certificate certificate = certificateRepository.findByVerificationCode(request.getVerificationCode())
+                .orElseThrow(() -> new ResourceNotFoundException("Certificate not found with verification code: " + request.getVerificationCode()));
+
+        return CertificateVerificationResponse.builder()
+                .isValid(true)
+                .certificateId(certificate.getId())
+                .userName(certificate.getUser().getFirstName() + " " + certificate.getUser().getLastName())
+                .courseTitle(certificate.getCourse().getTitle())
+                .issueDate(certificate.getIssueDate())
+                .build();
     }
 }

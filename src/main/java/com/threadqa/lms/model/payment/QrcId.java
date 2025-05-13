@@ -4,6 +4,7 @@ import com.threadqa.lms.model.course.Course;
 import com.threadqa.lms.model.user.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -14,6 +15,7 @@ import java.time.ZonedDateTime;
 @Table(name = "qrc_ids")
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class QrcId {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

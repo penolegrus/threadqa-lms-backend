@@ -9,6 +9,7 @@ import com.threadqa.lms.exception.BadRequestException;
 import com.threadqa.lms.exception.ResourceNotFoundException;
 import com.threadqa.lms.model.course.Course;
 import com.threadqa.lms.model.course.CourseEnrollment;
+import com.threadqa.lms.model.payment.Payment;
 import com.threadqa.lms.model.payment.QrcId;
 import com.threadqa.lms.model.user.User;
 import com.threadqa.lms.repository.course.CourseEnrollmentRepository;
@@ -25,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -60,7 +62,7 @@ public class CoursePurchaseService {
                 .orElseThrow(() -> new ResourceNotFoundException("Course not found"));
 
         // Проверяем, что курс доступен для покупки
-        if (!course.isPublished()) {
+        if (!course.getIsPublished()) {
             throw new BadRequestException("Course is not available for purchase");
         }
 
@@ -80,7 +82,7 @@ public class CoursePurchaseService {
         if (request.getPromoCode() != null && !request.getPromoCode().isEmpty()) {
             try {
                 var promoValidation = promoCodeService.validatePromoCode(request.getPromoCode(), course.getId(), userId);
-                if (promoValidation.isValid()) {
+                if (promoValidation.getIsValid()) {
                     // Преобразуем Double в BigDecimal
                     discountAmount = new BigDecimal(promoValidation.getDiscountAmount().toString());
                     finalPrice = originalPrice.subtract(discountAmount);
@@ -105,12 +107,12 @@ public class CoursePurchaseService {
                     .qrcId(qrResponse.getQrcId())
                     .user(user)
                     .course(course)
-                    .createdAt(LocalDateTime.now())
+                    .createdAt(ZonedDateTime.now())
                     .build();
             qrcIdRepository.save(qrcId);
 
             // Создаем платеж со статусом PENDING
-            com.threadqa.lms.model.payment.Payment payment = com.threadqa.lms.model.payment.Payment.builder()
+            Payment payment = Payment.builder()
                     .user(user)
                     .course(course)
                     .amount(finalPrice)
@@ -128,7 +130,7 @@ public class CoursePurchaseService {
                     .createdAt(LocalDateTime.now())
                     .build();
 
-            com.threadqa.lms.model.payment.Payment savedPayment = paymentService.savePayment(payment);
+            Payment savedPayment = paymentService.savePayment(payment);
 
             // Отправляем уведомление о создании платежа
             notificationService.createNotification(
@@ -159,7 +161,7 @@ public class CoursePurchaseService {
             // Если курс бесплатный или стал бесплатным после применения промокода
             
             // Создаем платеж со статусом COMPLETED
-            com.threadqa.lms.model.payment.Payment payment = com.threadqa.lms.model.payment.Payment.builder()
+            Payment payment = Payment.builder()
                     .user(user)
                     .course(course)
                     .amount(BigDecimal.ZERO)
@@ -175,7 +177,7 @@ public class CoursePurchaseService {
                     .createdAt(LocalDateTime.now())
                     .build();
 
-            com.threadqa.lms.model.payment.Payment savedPayment = paymentService.savePayment(payment);
+           Payment savedPayment = paymentService.savePayment(payment);
 
             // Записываем пользователя на курс
             CourseEnrollmentRequest enrollmentRequest = new CourseEnrollmentRequest();

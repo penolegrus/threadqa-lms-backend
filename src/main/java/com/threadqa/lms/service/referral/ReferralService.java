@@ -165,7 +165,7 @@ public class ReferralService {
         
         return referralMapper.toReferralStatisticsResponse(
                 userId,
-                user.getUsername(),
+                user.getEmail(),
                 totalInvitations,
                 successfulReferrals,
                 totalCreditEarned != null ? totalCreditEarned : BigDecimal.ZERO,
@@ -175,11 +175,11 @@ public class ReferralService {
     }
     
     private void sendReferralEmail(User referrer, String recipientEmail, String referralCode, String customMessage) {
-        String subject = referrer.getUsername() + " has invited you to join our learning platform";
+        String subject = referrer.getEmail() + " has invited you to join our learning platform";
         
         StringBuilder messageBuilder = new StringBuilder();
         messageBuilder.append("Hello,\n\n");
-        messageBuilder.append(referrer.getUsername()).append(" has invited you to join our learning platform.\n\n");
+        messageBuilder.append(referrer.getEmail()).append(" has invited you to join our learning platform.\n\n");
         
         if (customMessage != null && !customMessage.isEmpty()) {
             messageBuilder.append("Personal message: ").append(customMessage).append("\n\n");

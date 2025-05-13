@@ -263,7 +263,7 @@ public class PromoCodeService {
         
         // Расчет скидки
         Double originalPrice = course.getPrice();
-        Double discountAmount = 0.0;
+        double discountAmount = 0.0;
         
         if (promoCode.getDiscountPercent() != null && promoCode.getDiscountPercent() > 0) {
             discountAmount += originalPrice * (promoCode.getDiscountPercent() / 100.0);

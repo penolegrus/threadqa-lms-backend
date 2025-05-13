@@ -38,4 +38,12 @@ public class CourseEnrollment {
 
     @Column(name = "is_active", nullable = false)
     private Boolean isActive;
+    
+    /**
+     * Проверяет, завершен ли курс
+     * @return true, если курс завершен
+     */
+    public boolean isCompleted() {
+        return completedAt != null;
+    }
 }

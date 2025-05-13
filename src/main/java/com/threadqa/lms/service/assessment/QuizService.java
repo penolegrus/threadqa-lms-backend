@@ -281,19 +281,23 @@ public class QuizService {
         answer = answerRepository.save(answer);
 
         // Track progress and send notification
-        progressTrackingService.trackProgress(userId, "QUIZ_COMPLETE", quiz.getId(), score);
+        progressTrackingService.trackProgress(userId, "QUIZ", quiz.getId(), score);
         progressTrackingService.trackActivity(userId, "QUIZ_SUBMIT", "Completed quiz: " + quiz.getTitle());
 
         if (isPassed) {
-            notificationService.sendNotification(
+            notificationService.createNotification(
                     userId, 
                     "Quiz Completed Successfully", 
-                    "You passed the quiz '" + quiz.getTitle() + "' with a score of " + score + "%");
+                    "You passed the quiz '" + quiz.getTitle() + "' with a score of " + score + "%",
+                    "QUIZ_PASSED",
+                    "/quizzes/" + quizId + "/results");
         } else {
-            notificationService.sendNotification(
+            notificationService.createNotification(
                     userId, 
                     "Quiz Completed", 
-                    "You completed the quiz '" + quiz.getTitle() + "' with a score of " + score + "%");
+                    "You completed the quiz '" + quiz.getTitle() + "' with a score of " + score + "%",
+                    "QUIZ_COMPLETED",
+                    "/quizzes/" + quizId + "/results");
         }
 
         return quizMapper.toResponse(answer, questionAnswers);
@@ -436,10 +440,12 @@ public class QuizService {
         attempt = answerRepository.save(attempt);
 
         // Send notification to the student
-        notificationService.sendNotification(
+        notificationService.createNotification(
                 attempt.getUser().getId(),
                 "Quiz Feedback Received",
-                "You have received feedback for your quiz attempt on '" + attempt.getQuiz().getTitle() + "'");
+                "You have received feedback for your quiz attempt on '" + attempt.getQuiz().getTitle() + "'",
+                "QUIZ_FEEDBACK",
+                "/quizzes/" + attempt.getQuiz().getId() + "/attempts/" + attempt.getId());
 
         List<QuizQuestionAnswer> questionAnswers = questionAnswerRepository.findByQuizAnswerId(attemptId);
         return quizMapper.toResponse(attempt, questionAnswers);

@@ -17,115 +17,125 @@ import java.util.Optional;
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     /**
-     * Find all payments for a specific user
+     * Находит все платежи для конкретного пользователя
      */
     Page<Payment> findByUserId(Long userId, Pageable pageable);
 
     /**
-     * Find all payments for a specific course
+     * Находит все платежи для конкретного курса
      */
     Page<Payment> findByCourseId(Long courseId, Pageable pageable);
 
     /**
-     * Find payment by transaction ID
+     * Находит платеж по ID транзакции
      */
     Optional<Payment> findByTransactionId(String transactionId);
 
     /**
-     * Find payment by invoice number
+     * Находит платеж по номеру счета
      */
     Optional<Payment> findByInvoiceNumber(String invoiceNumber);
 
     /**
-     * Find all payments with a specific status
+     * Находит все платежи с определенным статусом
      */
     Page<Payment> findByStatus(String status, Pageable pageable);
 
     /**
-     * Find all payments for a user with a specific status
+     * Находит все платежи пользователя с определенным статусом
      */
     Page<Payment> findByUserIdAndStatus(Long userId, String status, Pageable pageable);
 
     /**
-     * Find all payments for a course with a specific status
+     * Находит все платежи за курс с определенным статусом
      */
     Page<Payment> findByCourseIdAndStatus(Long courseId, String status, Pageable pageable);
 
     /**
-     * Find all payments created between two dates
+     * Находит все платежи, созданные в указанный период
      */
     Page<Payment> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
 
     /**
-     * Find all refunded payments
+     * Находит все возвращенные платежи
      */
     Page<Payment> findByRefundedTrue(Pageable pageable);
 
     /**
-     * Find all payments with amount greater than specified value
+     * Находит все платежи с суммой больше указанной
      */
     Page<Payment> findByAmountGreaterThan(BigDecimal amount, Pageable pageable);
 
     /**
-     * Find all payments with amount less than specified value
+     * Находит все платежи с суммой меньше указанной
      */
     Page<Payment> findByAmountLessThan(BigDecimal amount, Pageable pageable);
 
     /**
-     * Find all payments with a specific payment method
+     * Находит все платежи с определенным способом оплаты
      */
     Page<Payment> findByPaymentMethod(String paymentMethod, Pageable pageable);
 
     /**
-     * Find all payments with a specific promo code
+     * Находит все платежи с определенным промокодом
      */
     Page<Payment> findByPromoCode(String promoCode, Pageable pageable);
 
     /**
-     * Count payments by status
+     * Подсчитывает количество платежей по статусу
      */
     long countByStatus(String status);
 
     /**
-     * Count payments by user
+     * Подсчитывает количество платежей пользователя
      */
     long countByUserId(Long userId);
 
     /**
-     * Count payments by course
+     * Подсчитывает количество платежей за курс
      */
     long countByCourseId(Long courseId);
 
     /**
-     * Get total amount of payments for a specific course
+     * Подсчитывает количество платежей, созданных в указанный период
+     */
+    long countByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
+
+    /**
+     * Подсчитывает количество платежей с определенным статусом, созданных в указанный период
+     */
+    long countByStatusAndCreatedAtBetween(String status, LocalDateTime startDate, LocalDateTime endDate);
+
+    /**
+     * Получает общую сумму платежей за конкретный курс
      */
     @Query("SELECT SUM(p.amount) FROM Payment p WHERE p.course.id = :courseId AND p.status = 'COMPLETED'")
     BigDecimal getTotalAmountByCourseId(@Param("courseId") Long courseId);
 
     /**
-     * Get total amount of payments for a specific user
+     * Получает общую сумму платежей конкретного пользователя
      */
     @Query("SELECT SUM(p.amount) FROM Payment p WHERE p.user.id = :userId AND p.status = 'COMPLETED'")
     BigDecimal getTotalAmountByUserId(@Param("userId") Long userId);
 
     /**
-     * Get total amount of payments for a specific period
+     * Получает общую сумму платежей за указанный период
      */
     @Query("SELECT SUM(p.amount) FROM Payment p WHERE p.createdAt BETWEEN :startDate AND :endDate AND p.status = 'COMPLETED'")
     BigDecimal getTotalAmountForPeriod(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
     /**
-     * Find latest payments for a user
+     * Находит последние платежи пользователя
      */
     List<Payment> findTop5ByUserIdOrderByCreatedAtDesc(Long userId);
 
     /**
-     * Find latest payments for a course
+     * Находит последние платежи за курс
      */
     List<Payment> findTop5ByCourseIdOrderByCreatedAtDesc(Long courseId);
 
     /**
-     * Check if user has any successful payment for a course
+     * Проверяет, есть ли у пользователя успешный платеж за курс
      */
     boolean existsByUserIdAndCourseIdAndStatus(Long userId, Long courseId, String status);
 }

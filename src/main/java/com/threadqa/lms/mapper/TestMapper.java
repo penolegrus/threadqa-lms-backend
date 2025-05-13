@@ -1,9 +1,7 @@
 package com.threadqa.lms.mapper;
 
 import com.threadqa.lms.dto.assessment.TestOptionResponse;
-import com.threadqa.lms.dto.assessment.test.TestQuestionResponse;
-import com.threadqa.lms.dto.assessment.test.TestResponse;
-import com.threadqa.lms.dto.assessment.test.TestSubmissionResponse;
+import com.threadqa.lms.dto.assessment.test.*;
 import com.threadqa.lms.model.assessment.*;
 import org.springframework.stereotype.Component;
 

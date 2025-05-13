@@ -12,7 +12,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,15 +30,19 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/streams")
 @Tag(name = "Управление стримами", description = "API для управления онлайн-трансляциями")
-@RequiredArgsConstructor
 public class StreamController {
-
+    
     private final StreamService streamService;
-
+    
+    @Autowired
+    public StreamController(StreamService streamService) {
+        this.streamService = streamService;
+    }
+    
     /**
      * Создание нового стрима
-     *
-     * @param request     Данные для создания стрима
+     * 
+     * @param request Данные для создания стрима
      * @param currentUser Текущий пользователь (преподаватель)
      * @return Информация о созданном стриме
      */
@@ -55,15 +58,15 @@ public class StreamController {
     public ResponseEntity<StreamResponse> createStream(
             @Valid @RequestBody StreamRequest request,
             @CurrentUser UserPrincipal currentUser) {
-
+        
         Long instructorId = currentUser.getId();
         StreamResponse response = streamService.createStream(request, instructorId);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
-
+    
     /**
      * Получение информации о стриме по ID
-     *
+     * 
      * @param id ID стрима
      * @return Информация о стриме
      */
@@ -76,14 +79,14 @@ public class StreamController {
     })
     public ResponseEntity<StreamResponse> getStream(
             @Parameter(description = "ID стрима") @PathVariable("id") Long id) {
-
+        
         StreamResponse response = streamService.getStream(id);
         return ResponseEntity.ok(response);
     }
-
+    
     /**
      * Получение списка всех стримов с пагинацией
-     *
+     * 
      * @param pageable Параметры пагинации
      * @return Страница со списком стримов
      */
@@ -93,10 +96,10 @@ public class StreamController {
         Page<StreamResponse> streams = streamService.getAllStreams(pageable);
         return ResponseEntity.ok(streams);
     }
-
+    
     /**
      * Получение списка стримов для конкретного курса
-     *
+     * 
      * @param courseId ID курса
      * @param pageable Параметры пагинации
      * @return Страница со списком стримов курса
@@ -106,16 +109,16 @@ public class StreamController {
     public ResponseEntity<Page<StreamResponse>> getStreamsByCourse(
             @Parameter(description = "ID курса") @PathVariable Long courseId,
             Pageable pageable) {
-
+        
         Page<StreamResponse> streams = streamService.getStreamsByCourse(courseId, pageable);
         return ResponseEntity.ok(streams);
     }
-
+    
     /**
      * Получение списка стримов конкретного преподавателя
-     *
+     * 
      * @param instructorId ID преподавателя
-     * @param pageable     Параметры пагинации
+     * @param pageable Параметры пагинации
      * @return Страница со списком стримов преподавателя
      */
     @GetMapping("/instructor/{instructorId}")
@@ -123,32 +126,32 @@ public class StreamController {
     public ResponseEntity<Page<StreamResponse>> getStreamsByInstructor(
             @Parameter(description = "ID преподавателя") @PathVariable Long instructorId,
             Pageable pageable) {
-
+        
         Page<StreamResponse> streams = streamService.getStreamsByInstructor(instructorId, pageable);
         return ResponseEntity.ok(streams);
     }
-
+    
     /**
      * Получение списка стримов с определенным статусом
-     *
-     * @param status   Статус стрима (SCHEDULED, LIVE, COMPLETED, CANCELLED)
+     * 
+     * @param status Статус стрима (SCHEDULED, LIVE, COMPLETED, CANCELLED)
      * @param pageable Параметры пагинации
      * @return Страница со списком стримов с указанным статусом
      */
     @GetMapping("/status/{status}")
     @Operation(summary = "Получение стримов по статусу", description = "Получение всех стримов с определенным статусом")
     public ResponseEntity<Page<StreamResponse>> getStreamsByStatus(
-            @Parameter(description = "Статус стрима (SCHEDULED, LIVE, COMPLETED, CANCELLED)")
+            @Parameter(description = "Статус стрима (SCHEDULED, LIVE, COMPLETED, CANCELLED)") 
             @PathVariable String status,
             Pageable pageable) {
-
+        
         Page<StreamResponse> streams = streamService.getStreamsByStatus(status, pageable);
         return ResponseEntity.ok(streams);
     }
-
+    
     /**
      * Получение списка предстоящих стримов
-     *
+     * 
      * @return Список предстоящих стримов
      */
     @GetMapping("/upcoming")
@@ -157,10 +160,10 @@ public class StreamController {
         List<StreamResponse> streams = streamService.getUpcomingStreams();
         return ResponseEntity.ok(streams);
     }
-
+    
     /**
      * Получение списка активных (идущих в данный момент) стримов
-     *
+     * 
      * @return Список активных стримов
      */
     @GetMapping("/live")
@@ -169,12 +172,12 @@ public class StreamController {
         List<StreamResponse> streams = streamService.getLiveStreams();
         return ResponseEntity.ok(streams);
     }
-
+    
     /**
      * Обновление информации о стриме
-     *
-     * @param id          ID стрима
-     * @param request     Новые данные стрима
+     * 
+     * @param id ID стрима
+     * @param request Новые данные стрима
      * @param currentUser Текущий пользователь (преподаватель)
      * @return Обновленная информация о стриме
      */
@@ -191,17 +194,17 @@ public class StreamController {
             @Parameter(description = "ID стрима") @PathVariable("id") Long id,
             @Valid @RequestBody StreamRequest request,
             @CurrentUser UserPrincipal currentUser) {
-
+        
         Long instructorId = currentUser.getId();
         StreamResponse response = streamService.updateStream(id, request, instructorId);
         return ResponseEntity.ok(response);
     }
-
+    
     /**
      * Обновление статуса стрима (запуск, завершение, отмена)
-     *
-     * @param id          ID стрима
-     * @param request     Новый статус стрима
+     * 
+     * @param id ID стрима
+     * @param request Новый статус стрима
      * @param currentUser Текущий пользователь (преподаватель)
      * @return Обновленная информация о стриме
      */
@@ -212,17 +215,17 @@ public class StreamController {
             @Parameter(description = "ID стрима") @PathVariable("id") Long id,
             @Valid @RequestBody StreamStatusUpdateRequest request,
             @CurrentUser UserPrincipal currentUser) {
-
+        
         Long instructorId = currentUser.getId();
         StreamResponse response = streamService.updateStreamStatus(id, request, instructorId);
         return ResponseEntity.ok(response);
     }
-
+    
     /**
      * Добавление ссылки на запись стрима
-     *
-     * @param id          ID стрима
-     * @param request     Данные о записи стрима
+     * 
+     * @param id ID стрима
+     * @param request Данные о записи стрима
      * @param currentUser Текущий пользователь (преподаватель)
      * @return Обновленная информация о стриме
      */
@@ -233,16 +236,16 @@ public class StreamController {
             @Parameter(description = "ID стрима") @PathVariable("id") Long id,
             @Valid @RequestBody StreamRecordingRequest request,
             @CurrentUser UserPrincipal currentUser) {
-
+        
         Long instructorId = currentUser.getId();
         StreamResponse response = streamService.addStreamRecording(id, request, instructorId);
         return ResponseEntity.ok(response);
     }
-
+    
     /**
      * Удаление стрима
-     *
-     * @param id          ID стрима
+     * 
+     * @param id ID стрима
      * @param currentUser Текущий пользователь (преподаватель)
      * @return Пустой ответ с кодом 204 (No Content)
      */
@@ -257,16 +260,16 @@ public class StreamController {
     public ResponseEntity<Void> deleteStream(
             @Parameter(description = "ID стрима") @PathVariable("id") Long id,
             @CurrentUser UserPrincipal currentUser) {
-
+        
         Long instructorId = currentUser.getId();
         streamService.deleteStream(id, instructorId);
         return ResponseEntity.noContent().build();
     }
-
+    
     /**
      * Присоединение к стриму в качестве участника
-     *
-     * @param id          ID стрима
+     * 
+     * @param id ID стрима
      * @param currentUser Текущий пользователь
      * @return Информация об участии в стриме
      */
@@ -275,16 +278,16 @@ public class StreamController {
     public ResponseEntity<StreamParticipantResponse> joinStream(
             @Parameter(description = "ID стрима") @PathVariable("id") Long id,
             @CurrentUser UserPrincipal currentUser) {
-
+        
         Long userId = currentUser.getId();
         StreamParticipantResponse response = streamService.joinStream(id, userId);
         return ResponseEntity.ok(response);
     }
-
+    
     /**
      * Выход из стрима (для участника)
-     *
-     * @param id          ID стрима
+     * 
+     * @param id ID стрима
      * @param currentUser Текущий пользователь
      * @return Обновленная информация об участии в стриме
      */
@@ -293,15 +296,15 @@ public class StreamController {
     public ResponseEntity<StreamParticipantResponse> leaveStream(
             @Parameter(description = "ID стрима") @PathVariable("id") Long id,
             @CurrentUser UserPrincipal currentUser) {
-
+        
         Long userId = currentUser.getId();
         StreamParticipantResponse response = streamService.leaveStream(id, userId);
         return ResponseEntity.ok(response);
     }
-
+    
     /**
      * Получение списка всех участников стрима
-     *
+     * 
      * @param id ID стрима
      * @return Список участников стрима
      */
@@ -309,14 +312,14 @@ public class StreamController {
     @Operation(summary = "Получение участников стрима", description = "Получение списка всех участников стрима")
     public ResponseEntity<List<StreamParticipantResponse>> getStreamParticipants(
             @Parameter(description = "ID стрима") @PathVariable("id") Long id) {
-
+        
         List<StreamParticipantResponse> participants = streamService.getStreamParticipants(id);
         return ResponseEntity.ok(participants);
     }
-
+    
     /**
      * Получение списка активных участников стрима (тех, кто сейчас присутствует)
-     *
+     * 
      * @param id ID стрима
      * @return Список активных участников стрима
      */
@@ -324,7 +327,7 @@ public class StreamController {
     @Operation(summary = "Получение активных участников стрима", description = "Получение списка всех активных участников стрима")
     public ResponseEntity<List<StreamParticipantResponse>> getActiveStreamParticipants(
             @Parameter(description = "ID стрима") @PathVariable("id") Long id) {
-
+        
         List<StreamParticipantResponse> participants = streamService.getActiveStreamParticipants(id);
         return ResponseEntity.ok(participants);
     }
