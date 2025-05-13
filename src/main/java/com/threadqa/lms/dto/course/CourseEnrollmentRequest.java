@@ -1,6 +1,5 @@
-package com.threadqa.lms.dto.topic;
+package com.threadqa.lms.dto.course;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,15 +10,10 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TopicRequest {
-
-    @NotBlank(message = "Title is required")
-    private String title;
-
-    private String description;
+public class CourseEnrollmentRequest {
 
     @NotNull(message = "Course ID is required")
     private Long courseId;
 
-    private Integer orderIndex;
+    private Long userId; // Может быть null, если берется из текущего аутентифицированного пользователя
 }
